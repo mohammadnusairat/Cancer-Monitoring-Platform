@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
+import { FaHospital } from 'react-icons/fa'
 import './Navigation.css'
 
 const Navigation = () => {
@@ -13,7 +14,7 @@ const Navigation = () => {
       <div className="nav-container">
         <div className="nav-brand">
           <Link to="/" className="brand-link">
-            <h1>🏥 Cancer Monitor</h1>
+            <h1><FaHospital /> Cancer Monitor</h1>
           </Link>
         </div>
         

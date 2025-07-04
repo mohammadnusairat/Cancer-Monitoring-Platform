@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { FaEye, FaUpload } from 'react-icons/fa'
 import './PatientList.css'
 
 interface Patient {
@@ -238,10 +239,10 @@ const PatientList = () => {
                           to={`/patients/${patient.patient_id}`}
                           className="action-btn view-btn"
                         >
-                          👁️ View
+                          <FaEye /> View
                         </Link>
                         <button className="action-btn upload-btn">
-                          📤 Upload
+                          <FaUpload /> Upload
                         </button>
                       </div>
                     </td>

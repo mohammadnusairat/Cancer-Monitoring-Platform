@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+import { FaUpload, FaMicroscope, FaExclamationTriangle, FaUser, FaChartBar, FaVials } from 'react-icons/fa'
 import './Dashboard.css'
 
 interface DashboardStats {
@@ -110,28 +111,28 @@ const Dashboard = () => {
         {/* Stats Cards */}
         <div className="stats-grid">
           <div className="stat-card">
-            <div className="stat-icon">👥</div>
+            <div className="stat-icon"><FaUser /></div>
             <div className="stat-content">
               <h3>{stats.totalPatients}</h3>
               <p>Total Patients</p>
             </div>
           </div>
           <div className="stat-card">
-            <div className="stat-icon">📊</div>
+            <div className="stat-icon"><FaChartBar /></div>
             <div className="stat-content">
               <h3>{stats.totalScans}</h3>
               <p>Total Scans</p>
             </div>
           </div>
           <div className="stat-card">
-            <div className="stat-icon">⚠️</div>
+            <div className="stat-icon"><FaExclamationTriangle /></div>
             <div className="stat-content">
               <h3>{stats.activeAlerts}</h3>
               <p>Active Alerts</p>
             </div>
           </div>
           <div className="stat-card">
-            <div className="stat-icon">🔬</div>
+            <div className="stat-icon"><FaVials /></div>
             <div className="stat-content">
               <h3>{stats.recentSegmentations}</h3>
               <p>Recent Segmentations</p>
@@ -185,9 +186,9 @@ const Dashboard = () => {
             {recentActivity.map((activity) => (
               <div key={activity.id} className="activity-item">
                 <div className="activity-icon">
-                  {activity.type === 'scan_upload' && '📤'}
-                  {activity.type === 'segmentation' && '🔬'}
-                  {activity.type === 'alert' && '⚠️'}
+                  {activity.type === 'scan_upload' && <FaUpload />}
+                  {activity.type === 'segmentation' && <FaMicroscope />}
+                  {activity.type === 'alert' && <FaExclamationTriangle />}
                 </div>
                 <div className="activity-content">
                   <p className="activity-description">{activity.description}</p>
@@ -208,13 +209,13 @@ const Dashboard = () => {
           <h3>Quick Actions</h3>
           <div className="action-buttons">
             <Link to="/upload" className="action-button">
-              📤 Upload New Scan
+              <FaUpload /> Upload New Scan
             </Link>
             <Link to="/patients" className="action-button">
-              👥 View All Patients
+              <FaUser /> View All Patients
             </Link>
             <button className="action-button">
-              📊 Generate Report
+              <FaChartBar /> Generate Report
             </button>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { FaUpload, FaChartBar } from 'react-icons/fa'
 import './PatientDetail.css'
 
 interface Patient {
@@ -191,10 +192,10 @@ const PatientDetail = () => {
           </div>
           <div className="patient-actions">
             <Link to="/upload" className="action-btn primary">
-              📤 Upload New Scan
+              <FaUpload /> Upload New Scan
             </Link>
             <button className="action-btn secondary">
-              📊 Generate Report
+              <FaChartBar /> Generate Report
             </button>
           </div>
         </div>
