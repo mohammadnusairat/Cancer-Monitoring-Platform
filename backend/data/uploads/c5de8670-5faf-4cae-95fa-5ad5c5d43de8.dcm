@@ -1,0 +1,17 @@
+# This is a dummy DICOM file for testing CT uploads
+# In a real scenario, this would be a binary medical image file
+# For testing purposes, this text file will be accepted by the system
+# and processed by the simulated nnUNet model
+
+# DICOM Header Information (simulated)
+# Patient Name: Test Patient
+# Study Date: 20240115
+# Modality: CT
+# Body Part: Chest
+# Slice Thickness: 5mm
+# KVp: 120
+# mA: 200
+
+# This file simulates a chest CT scan
+# The system will process this as if it were a real DICOM file
+# and return simulated lesion detection results 

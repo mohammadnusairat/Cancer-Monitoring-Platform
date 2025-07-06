@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1.endpoints import segment, patients, monitor
+from app.api.v1.endpoints import segment, patients, monitor, upload, analyze
 from app.db.database import engine
 from app.db.models import Base
 
@@ -26,6 +26,8 @@ app.add_middleware(
 app.include_router(patients.router, prefix="/api/v1/patients", tags=["Patients"])
 app.include_router(segment.router, prefix="/api/v1/segment", tags=["Segmentation"])
 app.include_router(monitor.router, prefix="/api/v1/monitor", tags=["Monitoring"])
+app.include_router(upload.router, prefix="/api/v1/upload", tags=["Upload"])
+app.include_router(analyze.router, prefix="/api/v1/analyze", tags=["Analysis"])
 
 @app.get("/")
 def read_root():
@@ -35,7 +37,9 @@ def read_root():
         "endpoints": {
             "patients": "/api/v1/patients",
             "segmentation": "/api/v1/segment", 
-            "monitoring": "/api/v1/monitor"
+            "monitoring": "/api/v1/monitor",
+            "upload": "/api/v1/upload",
+            "analysis": "/api/v1/analyze"
         }
     }
 

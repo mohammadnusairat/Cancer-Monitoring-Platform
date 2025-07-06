@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./UploadForm.css";
 
 interface Patient {
@@ -10,11 +10,17 @@ interface Patient {
 }
 
 const UploadForm = () => {
+  const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<string>("");
   const [scanDate, setScanDate] = useState<string>("");
   const [scanType, setScanType] = useState<string>("T1");
   const [modality, setModality] = useState<string>("MRI");
+  const [scanTypes, setScanTypes] = useState<{[key: string]: string[]}>({
+    "MRI": ["T1", "T2", "FLAIR", "T1c", "DWI"],
+    "CT": ["Non-contrast", "Contrast", "CECT", "HRCT"],
+    "XRAY": ["Chest PA", "Chest Lateral", "Abdomen", "Pelvis", "Spine"]
+  });
   const [bodyPart, setBodyPart] = useState<string>("Brain");
   const [response, setResponse] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -72,7 +78,7 @@ const UploadForm = () => {
     formData.append("body_part", bodyPart);
 
     try {
-      const res = await fetch("http://localhost:8000/api/v1/segment/upload", {
+      const res = await fetch("http://localhost:8000/api/v1/upload/", {
         method: "POST",
         body: formData,
       });
@@ -83,10 +89,14 @@ const UploadForm = () => {
         setResponse(data);
         setUploadStep("processing");
         
-        // Simulate processing time
+        // Simulate processing time and redirect to analysis
         setTimeout(() => {
           setUploadStep("complete");
           setLoading(false);
+          // Redirect to analysis page after a short delay
+          setTimeout(() => {
+            navigate(`/analyze/${data.scan_id}`);
+          }, 2000);
         }, 3000);
       } else {
         alert(`Upload failed: ${data.detail || "Unknown error"}`);
@@ -108,6 +118,13 @@ const UploadForm = () => {
     setBodyPart("Brain");
     setResponse(null);
     setUploadStep("upload");
+  };
+
+  const handleModalityChange = (newModality: string) => {
+    setModality(newModality);
+    // Reset scan type to first option for new modality
+    const newScanTypes = scanTypes[newModality] || ["T1"];
+    setScanType(newScanTypes[0]);
   };
 
   return (
@@ -163,11 +180,14 @@ const UploadForm = () => {
                   id="file"
                   onChange={handleFileChange}
                   className="form-control"
-                  accept=".nii.gz,.nii,.dcm,.dicom,.mha,.mhd"
+                  accept={modality === "XRAY" ? ".dcm,.dicom,.jpg,.jpeg,.png,.tiff,.tif" : ".nii.gz,.nii,.dcm,.dicom,.mha,.mhd"}
                   required
                 />
                 <small className="file-help">
-                  Supported formats: NIfTI (.nii.gz, .nii), DICOM (.dcm, .dicom), MetaImage (.mha, .mhd)
+                  {modality === "XRAY" 
+                    ? "Supported formats: DICOM (.dcm, .dicom), JPEG (.jpg, .jpeg), PNG (.png), TIFF (.tiff, .tif)"
+                    : "Supported formats: NIfTI (.nii.gz, .nii), DICOM (.dcm, .dicom), MetaImage (.mha, .mhd)"
+                  }
                 </small>
               </div>
 
@@ -192,11 +212,9 @@ const UploadForm = () => {
                     onChange={(e) => setScanType(e.target.value)}
                     className="form-control"
                   >
-                    <option value="T1">T1</option>
-                    <option value="T2">T2</option>
-                    <option value="FLAIR">FLAIR</option>
-                    <option value="T1c">T1c</option>
-                    <option value="DWI">DWI</option>
+                    {scanTypes[modality]?.map((type) => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -207,12 +225,12 @@ const UploadForm = () => {
                   <select
                     id="modality"
                     value={modality}
-                    onChange={(e) => setModality(e.target.value)}
+                    onChange={(e) => handleModalityChange(e.target.value)}
                     className="form-control"
                   >
                     <option value="MRI">MRI</option>
                     <option value="CT">CT</option>
-                    <option value="PET">PET</option>
+                    <option value="XRAY">X-Ray</option>
                   </select>
                 </div>
 
@@ -226,7 +244,10 @@ const UploadForm = () => {
                   >
                     <option value="Brain">Brain</option>
                     <option value="Chest">Chest</option>
+                    <option value="Chest PA">Chest PA</option>
+                    <option value="Chest Lateral">Chest Lateral</option>
                     <option value="Abdomen">Abdomen</option>
+                    <option value="Pelvis">Pelvis</option>
                     <option value="Spine">Spine</option>
                   </select>
                 </div>
@@ -262,15 +283,15 @@ const UploadForm = () => {
                 </div>
                 <div className="step-item">
                   <span className="step-icon">⏳</span>
-                  <span>Running TumorTrace segmentation</span>
+                  <span>Running {modality === "MRI" ? "TumorTrace" : modality === "CT" ? "nnUNet" : "CheXNet"} analysis</span>
                 </div>
                 <div className="step-item">
                   <span className="step-icon">⏳</span>
-                  <span>Calculating tumor volume</span>
+                  <span>Calculating {modality === "XRAY" ? "abnormality area" : "tumor volume"}</span>
                 </div>
                 <div className="step-item">
                   <span className="step-icon">⏳</span>
-                  <span>Generating segmentation mask</span>
+                  <span>Generating {modality === "XRAY" ? "detection mask" : "segmentation mask"}</span>
                 </div>
               </div>
             </div>

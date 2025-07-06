@@ -1,13 +1,16 @@
-# 🏥 Cancer Patient Monitoring Platform
+# 🏥 Multimodal Cancer Imaging Analysis Platform
 
-A comprehensive full-stack application for monitoring cancer patients with advanced tumor segmentation and longitudinal tracking capabilities.
+A comprehensive full-stack application for monitoring cancer patients with advanced AI-powered analysis of multiple imaging modalities including MRI, CT scans, and X-rays.
 
 ## 🚀 Features
 
 ### Core Functionality
 - **Patient Management**: Complete patient records with demographics and medical history
-- **Medical Scan Upload**: Support for NIfTI, DICOM, and MetaImage formats
-- **Tumor Segmentation**: AI-powered segmentation using TumorTrace integration
+- **Multimodal Imaging Support**: Upload and analyze MRI, CT scans, and X-rays
+- **AI-Powered Analysis**: 
+  - **MRI**: TumorTrace segmentation for brain tumor detection
+  - **CT**: nnUNet analysis for lesion detection and segmentation
+  - **X-Ray**: CheXNet for abnormality detection and classification
 - **Longitudinal Monitoring**: Track tumor volume changes over time
 - **Alert System**: Automated alerts for rapid growth or concerning trends
 - **Interactive Dashboard**: Real-time analytics and visualization
@@ -16,7 +19,14 @@ A comprehensive full-stack application for monitoring cancer patients with advan
 - **Backend**: FastAPI (Python) with SQLAlchemy ORM
 - **Frontend**: React with TypeScript and Vite
 - **Database**: PostgreSQL (production) / SQLite (development)
-- **Medical Imaging**: Nibabel for NIfTI processing
+- **Medical Imaging**: 
+  - Nibabel for NIfTI processing
+  - OpenCV for image processing
+  - Pydicom for DICOM handling
+- **AI Models**: 
+  - TumorTrace for MRI segmentation
+  - nnUNet for CT analysis
+  - CheXNet for X-ray classification
 - **Visualization**: Recharts for data visualization
 - **UI/UX**: Modern, responsive design with medical-grade interface
 
@@ -149,9 +159,12 @@ cancer-monitoring-platform/
 - `PUT /api/v1/patients/{patient_id}` - Update patient
 - `DELETE /api/v1/patients/{patient_id}` - Delete patient
 
-### Segmentation
-- `POST /api/v1/segment/upload` - Upload medical scan
-- `POST /api/v1/segment/process/{scan_id}` - Process segmentation
+### Upload & Analysis
+- `POST /api/v1/upload/` - Upload medical scan (MRI/CT/X-ray)
+- `GET /api/v1/analyze/?scan_id={scan_id}` - Run AI analysis on scan
+- `GET /api/v1/analyze/status/{scan_id}` - Check analysis status
+- `POST /api/v1/segment/upload` - Legacy upload endpoint
+- `POST /api/v1/segment/process/{scan_id}` - Legacy segmentation endpoint
 - `GET /api/v1/segment/{scan_id}/segmentation` - Get segmentation results
 
 ### Monitoring
@@ -160,18 +173,33 @@ cancer-monitoring-platform/
 - `GET /api/v1/monitor/patient/{patient_id}/alerts` - Patient alerts
 - `POST /api/v1/monitor/patient/{patient_id}/check-alerts` - Check for new alerts
 
-## 🧠 Tumor Segmentation Integration
+## 🧠 Multimodal AI Analysis Integration
 
-The platform is designed to integrate with advanced tumor segmentation models:
+The platform integrates with state-of-the-art AI models for different imaging modalities:
 
-### TumorTrace Integration
+### MRI Analysis - TumorTrace
 - **Input**: NIfTI, DICOM, or MetaImage files
-- **Processing**: AI-powered tumor detection and segmentation
+- **Processing**: AI-powered brain tumor detection and segmentation
 - **Output**: Segmentation masks with volume calculations
 - **Metrics**: Tumor volume (cc/mm³), confidence scores, processing time
+- **Specialization**: Brain tumor analysis with T1, T2, FLAIR, T1c, DWI sequences
 
-### cancer-sim-search Integration
-- **Longitudinal Analysis**: Track tumor changes over time
+### CT Analysis - nnUNet
+- **Input**: CT scan files (NIfTI, DICOM, MetaImage)
+- **Processing**: Advanced lesion detection and segmentation
+- **Output**: Segmentation masks with Hounsfield unit analysis
+- **Metrics**: Lesion volume, Hounsfield unit ranges, lesion type classification
+- **Specialization**: Multi-organ analysis (brain, chest, abdomen, pelvis)
+
+### X-Ray Analysis - CheXNet
+- **Input**: X-ray images (DICOM, JPEG, PNG, TIFF)
+- **Processing**: Abnormality detection and classification
+- **Output**: Detection masks with abnormality classification
+- **Metrics**: Abnormality area, classification confidence, image quality score
+- **Specialization**: Chest X-ray analysis for pneumonia, nodules, fractures
+
+### Longitudinal Monitoring
+- **Multi-Modal Tracking**: Compare results across different modalities
 - **Growth Rate Calculation**: Automated trend analysis
 - **Alert Generation**: Intelligent monitoring and notifications
 

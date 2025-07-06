@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import './App.css'
 import Dashboard from './pages/Dashboard'
 import UploadForm from './pages/UploadForm'
+import AnalysisForm from './pages/AnalysisForm'
 import PatientList from './pages/PatientList'
 import PatientDetail from './pages/PatientDetail'
 import Navigation from './components/Navigation'
@@ -17,6 +18,7 @@ function App() {
             <Route path="/patients" element={<PatientList />} />
             <Route path="/patients/:patientId" element={<PatientDetail />} />
             <Route path="/upload" element={<UploadForm />} />
+            <Route path="/analyze/:scanId" element={<AnalysisForm />} />
           </Routes>
         </main>
       </div>
