@@ -26,6 +26,9 @@ const UploadForm = () => {
   const [loading, setLoading] = useState(false);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [uploadStep, setUploadStep] = useState<"upload" | "processing" | "complete">("upload");
+  const [histopathResult, setHistopathResult] = useState<any>(null);
+  const [histopathLoading, setHistopathLoading] = useState(false);
+  const [histopathError, setHistopathError] = useState<string | null>(null);
 
   // Mock patients data
   const mockPatients: Patient[] = [
@@ -74,7 +77,7 @@ const UploadForm = () => {
     formData.append("patient_id", selectedPatient);
     formData.append("scan_date", scanDate);
     formData.append("scan_type", scanType);
-    formData.append("modality", modality);
+    formData.append("modality", modality === "Histopathology" ? "HISTOPATH" : modality);
     formData.append("body_part", bodyPart);
 
     try {
@@ -84,20 +87,44 @@ const UploadForm = () => {
       });
 
       const data = await res.json();
-      
       if (res.ok) {
         setResponse(data);
         setUploadStep("processing");
-        
-        // Simulate processing time and redirect to analysis
-        setTimeout(() => {
-          setUploadStep("complete");
-          setLoading(false);
-          // Redirect to analysis page after a short delay
+        // If Histopathology, trigger analysis immediately
+        if (modality === "Histopathology") {
+          setHistopathLoading(true);
+          setHistopathError(null);
+          setHistopathResult(null);
+          // Use the uploaded filename from the response or file
+          const uploadedFilename = data.filename || (file ? file.name : "");
+          const scanId = data.scan_id;
+          try {
+            const analyzeRes = await fetch(`http://localhost:8000/api/v1/analyze/?scan_id=${scanId}`);
+            const analyzeData = await analyzeRes.json();
+            if (analyzeRes.ok) {
+              setHistopathResult(analyzeData);
+              setUploadStep("complete");
+            } else {
+              setHistopathError(analyzeData.detail || "Analysis failed");
+              setUploadStep("complete");
+            }
+          } catch (err) {
+            setHistopathError("Network error during analysis");
+            setUploadStep("complete");
+          } finally {
+            setHistopathLoading(false);
+            setLoading(false);
+          }
+        } else {
+          // Simulate processing time and redirect to analysis
           setTimeout(() => {
-            navigate(`/analyze/${data.scan_id}`);
-          }, 2000);
-        }, 3000);
+            setUploadStep("complete");
+            setLoading(false);
+            setTimeout(() => {
+              navigate(`/analyze/${data.scan_id}`);
+            }, 2000);
+          }, 3000);
+        }
       } else {
         alert(`Upload failed: ${data.detail || "Unknown error"}`);
         setLoading(false);
@@ -123,8 +150,18 @@ const UploadForm = () => {
   const handleModalityChange = (newModality: string) => {
     setModality(newModality);
     // Reset scan type to first option for new modality
-    const newScanTypes = scanTypes[newModality] || ["T1"];
+    const newScanTypes = scanTypesExtended[newModality] || ["T1"];
     setScanType(newScanTypes[0]);
+    // For histopathology, set body part to Breast
+    if (newModality === "Histopathology") {
+      setBodyPart("Breast");
+    }
+  };
+
+  // Extend scanTypes to include Histopathology
+  const scanTypesExtended: { [key: string]: string[] } = {
+    ...scanTypes,
+    "Histopathology": ["H&E"]
   };
 
   return (
@@ -180,13 +217,21 @@ const UploadForm = () => {
                   id="file"
                   onChange={handleFileChange}
                   className="form-control"
-                  accept={modality === "XRAY" ? ".dcm,.dicom,.jpg,.jpeg,.png,.tiff,.tif" : ".nii.gz,.nii,.dcm,.dicom,.mha,.mhd"}
+                  accept={
+                    modality === "XRAY"
+                      ? ".dcm,.dicom,.jpg,.jpeg,.png,.tiff,.tif"
+                      : modality === "Histopathology"
+                        ? ".jpg,.jpeg,.png,.bmp,.tiff,.tif"
+                        : ".nii.gz,.nii,.dcm,.dicom,.mha,.mhd"
+                  }
                   required
                 />
                 <small className="file-help">
-                  {modality === "XRAY" 
+                  {modality === "XRAY"
                     ? "Supported formats: DICOM (.dcm, .dicom), JPEG (.jpg, .jpeg), PNG (.png), TIFF (.tiff, .tif)"
-                    : "Supported formats: NIfTI (.nii.gz, .nii), DICOM (.dcm, .dicom), MetaImage (.mha, .mhd)"
+                    : modality === "Histopathology"
+                      ? "Supported formats: JPEG (.jpg, .jpeg), PNG (.png), BMP (.bmp), TIFF (.tiff, .tif)"
+                      : "Supported formats: NIfTI (.nii.gz, .nii), DICOM (.dcm, .dicom), MetaImage (.mha, .mhd)"
                   }
                 </small>
               </div>
@@ -212,7 +257,7 @@ const UploadForm = () => {
                     onChange={(e) => setScanType(e.target.value)}
                     className="form-control"
                   >
-                    {scanTypes[modality]?.map((type) => (
+                    {scanTypesExtended[modality]?.map((type: string) => (
                       <option key={type} value={type}>{type}</option>
                     ))}
                   </select>
@@ -231,6 +276,7 @@ const UploadForm = () => {
                     <option value="MRI">MRI</option>
                     <option value="CT">CT</option>
                     <option value="XRAY">X-Ray</option>
+                    <option value="Histopathology">Histopathology</option>
                   </select>
                 </div>
 
@@ -275,7 +321,7 @@ const UploadForm = () => {
                 <div className="spinner"></div>
               </div>
               <h3>Processing Scan</h3>
-              <p>Running tumor segmentation analysis...</p>
+              <p>{modality === "Histopathology" ? "Running histopathology classification..." : "Running tumor segmentation analysis..."}</p>
               <div className="processing-steps">
                 <div className="step-item">
                   <span className="step-icon">✓</span>
@@ -283,15 +329,15 @@ const UploadForm = () => {
                 </div>
                 <div className="step-item">
                   <span className="step-icon">⏳</span>
-                  <span>Running {modality === "MRI" ? "TumorTrace" : modality === "CT" ? "nnUNet" : "CheXNet"} analysis</span>
+                  <span>{modality === "Histopathology" ? "Running CNN classification" : modality === "MRI" ? "Running TumorTrace" : modality === "CT" ? "Running nnUNet" : "Running CheXNet"} analysis</span>
                 </div>
                 <div className="step-item">
                   <span className="step-icon">⏳</span>
-                  <span>Calculating {modality === "XRAY" ? "abnormality area" : "tumor volume"}</span>
+                  <span>{modality === "Histopathology" ? "Calculating class probabilities" : modality === "XRAY" ? "Calculating abnormality area" : "Calculating tumor volume"}</span>
                 </div>
                 <div className="step-item">
                   <span className="step-icon">⏳</span>
-                  <span>Generating {modality === "XRAY" ? "detection mask" : "segmentation mask"}</span>
+                  <span>{modality === "Histopathology" ? "Generating classification report" : modality === "XRAY" ? "Generating detection mask" : "Generating segmentation mask"}</span>
                 </div>
               </div>
             </div>
@@ -305,8 +351,59 @@ const UploadForm = () => {
               </div>
               <h3>Upload Complete!</h3>
               <p>Your scan has been successfully processed.</p>
-              
-              {response && (
+              {/* Histopathology Results */}
+              {modality === "Histopathology" && histopathLoading && (
+                <div className="processing-section">
+                  <div className="processing-animation">
+                    <div className="spinner"></div>
+                  </div>
+                  <h3>Analyzing Histopathology Image...</h3>
+                  <p>Running CNN-based classification...</p>
+                </div>
+              )}
+              {modality === "Histopathology" && histopathError && (
+                <div className="error-section">
+                  <div className="error-animation">
+                    <span className="error-icon">⚠</span>
+                  </div>
+                  <h3>Analysis Failed</h3>
+                  <p>{histopathError}</p>
+                </div>
+              )}
+              {modality === "Histopathology" && histopathResult && (
+                <div className="result-summary">
+                  <h4>Histopathology Classification Results</h4>
+                  <div className="result-grid">
+                    <div className="result-item">
+                      <label>Predicted Class:</label>
+                      <span>{histopathResult.analysis_details?.predicted_class}</span>
+                    </div>
+                    <div className="result-item">
+                      <label>Confidence:</label>
+                      <span>{(histopathResult.confidence_score * 100).toFixed(1)}%</span>
+                    </div>
+                    <div className="result-item">
+                      <label>Malignant:</label>
+                      <span>{histopathResult.analysis_details?.is_malignant ? "Yes" : "No"}</span>
+                    </div>
+                  </div>
+                  <div className="result-item">
+                    <label>Class Probabilities:</label>
+                    <ul>
+                      {histopathResult.analysis_details?.class_probabilities &&
+                        Object.entries(histopathResult.analysis_details.class_probabilities).map(
+                          ([label, prob]) => (
+                            <li key={label}>
+                              {label}: {((prob as number) * 100).toFixed(1)}%
+                            </li>
+                          )
+                        )}
+                    </ul>
+                  </div>
+                </div>
+              )}
+              {/* Default result summary for other modalities */}
+              {modality !== "Histopathology" && response && (
                 <div className="result-summary">
                   <h4>Processing Results</h4>
                   <div className="result-grid">
@@ -325,7 +422,6 @@ const UploadForm = () => {
                   </div>
                 </div>
               )}
-
               <div className="complete-actions">
                 <Link to={`/patients/${selectedPatient}`} className="action-btn primary">
                   View Patient Details

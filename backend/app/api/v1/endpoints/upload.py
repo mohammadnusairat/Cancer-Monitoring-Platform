@@ -54,15 +54,21 @@ async def upload_image(
         )
     
     # Validate modality
-    valid_modalities = ["MRI", "CT", "XRAY"]
+    valid_modalities = ["MRI", "CT", "XRAY", "HISTOPATH"]
     if modality.upper() not in valid_modalities:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Unsupported modality. Supported modalities: {', '.join(valid_modalities)}"
         )
-    
     # Validate file format for the modality
-    if not validate_medical_file(file.filename, modality):
+    if modality.upper() == "HISTOPATH":
+        histopath_extensions = ['.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif']
+        if not any(file.filename.lower().endswith(ext) for ext in histopath_extensions):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Unsupported file format for Histopathology. Supported formats: .jpg, .jpeg, .png, .bmp, .tiff, .tif"
+            )
+    elif not validate_medical_file(file.filename, modality):
         if modality.upper() == "XRAY":
             detail = "Unsupported file format for X-ray. Supported formats: .dcm, .dicom, .jpg, .jpeg, .png, .tiff, .tif"
         else:
@@ -117,7 +123,7 @@ async def upload_image(
     db.refresh(scan)
     
     return UploadResponse(
-        filename=file.filename,
+        filename=unique_filename,
         status="uploaded",
         scan_id=str(scan.id),
         message=f"{modality} scan uploaded successfully"

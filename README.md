@@ -6,11 +6,12 @@ A comprehensive full-stack application for monitoring cancer patients with advan
 
 ### Core Functionality
 - **Patient Management**: Complete patient records with demographics and medical history
-- **Multimodal Imaging Support**: Upload and analyze MRI, CT scans, and X-rays
+- **Multimodal Imaging Support**: Upload and analyze MRI, CT scans, X-rays, and histopathology images
 - **AI-Powered Analysis**: 
   - **MRI**: TumorTrace segmentation for brain tumor detection
   - **CT**: nnUNet analysis for lesion detection and segmentation
   - **X-Ray**: CheXNet for abnormality detection and classification
+  - **Histopathology**: CNN-based breast cancer classification (Normal, Benign, In Situ, Invasive)
 - **Longitudinal Monitoring**: Track tumor volume changes over time
 - **Alert System**: Automated alerts for rapid growth or concerning trends
 - **Interactive Dashboard**: Real-time analytics and visualization
@@ -27,6 +28,7 @@ A comprehensive full-stack application for monitoring cancer patients with advan
   - TumorTrace for MRI segmentation
   - nnUNet for CT analysis
   - CheXNet for X-ray classification
+  - BreastCancerCNN for histopathology classification
 - **Visualization**: Recharts for data visualization
 - **UI/UX**: Modern, responsive design with medical-grade interface
 
@@ -197,6 +199,13 @@ The platform integrates with state-of-the-art AI models for different imaging mo
 - **Output**: Detection masks with abnormality classification
 - **Metrics**: Abnormality area, classification confidence, image quality score
 - **Specialization**: Chest X-ray analysis for pneumonia, nodules, fractures
+
+### Histopathology Analysis - BreastCancerCNN
+- **Input**: Histopathology images (JPEG, PNG, BMP, TIFF)
+- **Processing**: Breast tissue classification using CNN
+- **Output**: Classification results with confidence scores
+- **Metrics**: Classification confidence, class probabilities, malignancy detection
+- **Specialization**: Breast cancer histopathology analysis (Normal, Benign, In Situ, Invasive)
 
 ### Longitudinal Monitoring
 - **Multi-Modal Tracking**: Compare results across different modalities

@@ -1,0 +1,17 @@
+# This is a dummy JPEG file for testing X-ray uploads
+# In a real scenario, this would be a binary medical image file
+# For testing purposes, this text file will be accepted by the system
+# and processed by the simulated CheXNet model
+
+# Image Information (simulated)
+# Format: JPEG
+# Dimensions: 2048x2048
+# Bit Depth: 16-bit
+# Compression: Lossless
+# Modality: X-Ray
+# Body Part: Chest
+# View: PA (Postero-Anterior)
+
+# This file simulates a chest X-ray image
+# The system will process this as if it were a real JPEG file
+# and return simulated abnormality detection results 

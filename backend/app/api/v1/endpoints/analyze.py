@@ -1,51 +1,78 @@
 from fastapi import APIRouter, Query, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import Dict, Any
+import os
 
 from app.db.database import get_db
 from app.db.models import Scan as ScanModel, Segmentation as SegmentationModel
 from app.services.mri_segmenter import MRISegmenter
 from app.services.ct_analyzer import CTAnalyzer
 from app.services.xray_model import XRayModel
+from app.services.histo_classifier import HistoClassifier
 
 router = APIRouter()
 
 @router.get("/")
 async def analyze(
-    scan_id: str = Query(...),
+    scan_id: str = Query(None),
+    filename: str = Query(None),
+    modality: str = Query(None),
     db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Analyze a medical scan using the appropriate ML model based on modality"""
     
-    # Get scan
-    scan = db.query(ScanModel).filter(ScanModel.id == scan_id).first()
-    if not scan:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Scan with ID {scan_id} not found"
-        )
-    
-    # Check if analysis already exists
-    existing_segmentation = db.query(SegmentationModel).filter(SegmentationModel.scan_id == scan_id).first()
-    if existing_segmentation:
+    # Handle both scan_id and filename/modality parameters
+    if scan_id:
+        # Get scan from database
+        scan = db.query(ScanModel).filter(ScanModel.id == scan_id).first()
+        if not scan:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Scan with ID {scan_id} not found"
+            )
+        
+        # Check if analysis already exists
+        existing_segmentation = db.query(SegmentationModel).filter(SegmentationModel.scan_id == scan_id).first()
+        if existing_segmentation:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Analysis already exists for scan {scan_id}"
+            )
+        
+        file_path = str(scan.file_path)
+        modality = scan.modality.upper()
+        body_part = str(scan.body_part)
+        
+    elif filename and modality:
+        # Direct file analysis (for histopathology or other direct analysis)
+        file_path = os.path.join("data/uploads", filename)
+        if not os.path.exists(file_path):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"File {filename} not found in uploads directory"
+            )
+        modality = modality.upper()
+        body_part = "Breast"  # Default for histopathology
+        
+    else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Analysis already exists for scan {scan_id}"
+            detail="Either scan_id or both filename and modality must be provided"
         )
-    
-    # Route to appropriate model based on modality
-    modality = scan.modality.upper()
     
     try:
         if modality == "MRI":
             segmenter = MRISegmenter()
-            result = segmenter.analyze(str(scan.file_path), str(scan.scan_type))
+            result = segmenter.analyze(file_path, body_part)
         elif modality == "CT":
             analyzer = CTAnalyzer()
-            result = analyzer.analyze(str(scan.file_path), str(scan.body_part))
+            result = analyzer.analyze(file_path, body_part)
         elif modality == "XRAY":
             model = XRayModel()
-            result = model.analyze(str(scan.file_path), str(scan.body_part))
+            result = model.analyze(file_path, body_part)
+        elif modality == "HISTOPATH":
+            classifier = HistoClassifier()
+            result = classifier.analyze(file_path, body_part)
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
